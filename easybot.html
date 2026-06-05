@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>💬 EasyBot — Your EasyPageX AI Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0d14;
+      --surface: #111520;
+      --surface2: #171d2e;
+      --border: #1f2840;
+      --green: #22c55e;
+      --green-dim: #16a34a;
+      --green-glow: rgba(34,197,94,0.18);
+      --gold: #f5c542;
+      --gold-dim: rgba(245,197,66,0.12);
+      --text: #e8edf5;
+      --muted: #7a8aaa;
+      --user-bubble: #1a2540;
+      --bot-bubble: #111927;
+      --radius: 18px;
+      --radius-sm: 10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE TEXTURE ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── HEADER ── */
+    header {
+      width: 100%;
+      max-width: 780px;
+      padding: 28px 24px 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 6px;
+    }
+
+    .logo-mark {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--green), var(--gold));
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 0 24px var(--green-glow);
+      flex-shrink: 0;
+    }
+
+    .brand-text h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.55rem;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+
+    .brand-text h1 em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--green), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .brand-text p {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 2px;
+      font-weight: 300;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-decoration: none;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      transition: color .2s;
+    }
+    .back-link:hover { color: var(--green); }
+
+    /* ── TOPIC CHIPS ── */
+    .topic-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+    .chip:hover {
+      border-color: var(--green);
+      color: var(--green);
+      background: var(--green-glow);
+    }
+
+    /* ── CHAT WINDOW ── */
+    .chat-wrapper {
+      width: 100%;
+      max-width: 780px;
+      padding: 0 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 1;
+    }
+
+    .chat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      height: 460px;
+      overflow: hidden;
+      box-shadow: 0 8px 60px rgba(0,0,0,0.5);
+    }
+
+    /* status bar */
+    .chat-status-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .status-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    .status-tag {
+      margin-left: auto;
+      font-size: 0.7rem;
+      background: var(--gold-dim);
+      color: var(--gold);
+      border: 1px solid rgba(245,197,66,0.25);
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-weight: 500;
+    }
+
+    /* messages */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scroll-behavior: smooth;
+    }
+
+    #messages::-webkit-scrollbar { width: 4px; }
+    #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .msg {
+      display: flex;
+      gap: 10px;
+      max-width: 88%;
+      animation: slideIn .25s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .bot .avatar {
+      background: linear-gradient(135deg, var(--green), var(--gold));
+      box-shadow: 0 0 12px var(--green-glow);
+    }
+
+    .user .avatar {
+      background: var(--user-bubble);
+      border: 1px solid var(--border);
+    }
+
+    .bubble {
+      padding: 11px 15px;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .bot .bubble {
+      background: var(--bot-bubble);
+      border: 1px solid var(--border);
+      border-top-left-radius: 2px;
+      color: var(--text);
+    }
+
+    .user .bubble {
+      background: var(--user-bubble);
+      border: 1px solid rgba(34,197,94,0.2);
+      border-top-right-radius: 2px;
+      color: var(--text);
+    }
+
+    .bubble a {
+      color: var(--green);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    /* typing indicator */
+    .typing-dots {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      padding: 4px 2px;
+    }
+    .typing-dots span {
+      width: 7px;
+      height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+      opacity: 0.6;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: .2s; }
+    .typing-dots span:nth-child(3) { animation-delay: .4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* input row */
+    .input-row {
+      display: flex;
+      gap: 10px;
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    #userInput {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 11px 15px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color .2s;
+      resize: none;
+      height: 44px;
+      line-height: 1.4;
+    }
+
+    #userInput::placeholder { color: var(--muted); }
+    #userInput:focus { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-glow); }
+
+    #sendBtn {
+      background: linear-gradient(135deg, var(--green), #16a34a);
+      border: none;
+      border-radius: var(--radius-sm);
+      width: 44px;
+      height: 44px;
+      cursor: pointer;
+      color: #fff;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform .15s, box-shadow .2s;
+      box-shadow: 0 4px 16px var(--green-glow);
+    }
+
+    #sendBtn:hover { transform: scale(1.06); box-shadow: 0 4px 24px rgba(34,197,94,0.35); }
+    #sendBtn:active { transform: scale(0.97); }
+    #sendBtn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ── STATS STRIP ── */
+    .stats-strip {
+      width: 100%;
+      max-width: 780px;
+      padding: 20px 24px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      z-index: 1;
+    }
+
+    .stat-pill {
+      flex: 1;
+      min-width: 140px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      text-align: center;
+    }
+
+    .stat-pill strong {
+      display: block;
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--green), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-pill span {
+      font-size: 0.74rem;
+      color: var(--muted);
+      margin-top: 2px;
+      display: block;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 20px 24px 32px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      z-index: 1;
+    }
+
+    footer a { color: var(--green); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 520px) {
+      .chat-box { height: 400px; }
+      .brand-text h1 { font-size: 1.25rem; }
+      .stats-strip { gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand-row">
+    <div class="logo-mark">💬</div>
+    <div class="brand-text">
+      <h1>Easy<em>Bot</em></h1>
+      <p>Powered by EasyPageX · Ask me anything about landing pages & growth</p>
+    </div>
+  </div>
+  <a href="https://easypagex.github.io/why/" class="back-link">← Back to EasyPageX</a>
+
+  <div class="topic-chips">
+    <div class="chip" onclick="ask('What is EasyPageX?')">🏪 What is EasyPageX?</div>
+    <div class="chip" onclick="ask('How much does a landing page cost?')">💰 Pricing</div>
+    <div class="chip" onclick="ask('How does the process work?')">⚡ How it works</div>
+    <div class="chip" onclick="ask('Why do I need a landing page?')">🎯 Why a landing page?</div>
+    <div class="chip" onclick="ask('How do you boost social media profiles?')">📱 Social growth</div>
+    <div class="chip" onclick="ask('How fast can I get my page live?')">🚀 Timeline</div>
+  </div>
+</header>
+
+<div class="chat-wrapper">
+  <div class="chat-box">
+    <div class="chat-status-bar">
+      <div class="status-dot"></div>
+      <span class="status-name">EasyBot</span>
+      <span class="status-tag">✨ EasyPageX Expert</span>
+    </div>
+
+    <div id="messages">
+      <div class="msg bot">
+        <div class="avatar">🤖</div>
+        <div class="bubble">
+          Hey there! 👋 I'm <strong>EasyBot</strong>, your EasyPageX assistant.<br><br>
+          I can help you with everything about landing pages, pricing, how EasyPageX works, social media growth, lead capture — you name it! What would you like to know?
+        </div>
+      </div>
+    </div>
+
+    <div class="input-row">
+      <textarea id="userInput" placeholder="Ask anything about EasyPageX…" rows="1"></textarea>
+      <button id="sendBtn" onclick="sendMessage()" title="Send">➤</button>
+    </div>
+  </div>
+</div>
+
+<div class="stats-strip">
+  <div class="stat-pill"><strong>5×</strong><span>More conversions vs a homepage</span></div>
+  <div class="stat-pill"><strong>80%</strong><span>Businesses without a page lose customers</span></div>
+  <div class="stat-pill"><strong>48%</strong><span>More leads with great visuals</span></div>
+</div>
+
+<footer>
+  © 2026 <a href="https://easypagex.github.io/why/">EasyPageX</a> · Landing Pages, Fast & Easy ·
+  <a href="https://instagram.com/easypagex">Instagram</a> ·
+  <a href="https://twitter.com/easypagex">Twitter / X</a> ·
+  <a href="https://www.linkedin.com/in/ivanalvarezpaniagua/">LinkedIn</a>
+</footer>
+
+<script>
+  const SYSTEM_PROMPT = `You are EasyBot, a friendly and knowledgeable AI assistant for EasyPageX — a service that creates high-converting landing pages for small businesses. Your entire purpose is to answer questions related to EasyPageX and its services.
+
+Here is everything you know about EasyPageX:
+
+ABOUT EASYPAGEX:
+- EasyPageX creates custom, high-converting landing pages for small businesses
+- Their landing pages work 24/7 to capture leads, boost social media traffic, and turn visitors into loyal customers
+- Website: https://easypagex.github.io/lpus/
+- Social: Instagram @easypagex, Twitter/X @easypagex, LinkedIn: ivanalvarezpaniagua
+
+KEY BENEFITS:
+1. Drive Targeted Traffic — sends visitors from ads, social & Google to a page built to convert (not a cluttered homepage)
+2. Boost Social Profiles — cross-links Instagram, X & LinkedIn so every visitor becomes a follower
+3. Generate More Sales — one clear call-to-action reduces decision friction and lifts revenue
+4. Capture Every Lead — 96% of visitors don't buy on first visit; landing pages collect emails for follow-up
+
+KEY STATS:
+- 5× more conversions vs a generic homepage
+- 80% of businesses without a landing page lose customers daily
+- 48% more leads with great visuals on your page
+- 96% of visitors don't buy on the first visit — so capturing their email is crucial
+
+HOW IT WORKS (4 steps):
+1. Tell Us Your Vision — share your product, audience & goal in minutes
+2. We Design Your Page — custom, conversion-optimised, mobile-first design
+3. Review & Approve — you see it before it goes live; tweaks are included
+4. Launch & Grow — go live fast; customers start arriving from day one
+
+DESIGN PHILOSOPHY:
+- Mobile-first, conversion-optimised design
+- Custom-built per client (not templates)
+- Includes tweaks/revisions before going live
+- Results start from day one of launch
+
+For questions NOT related to EasyPageX, politely redirect: "That's outside my expertise! I'm here specifically to help with EasyPageX and landing pages. Got any questions about growing your business with a landing page?"
+
+Be concise, friendly, use relevant emojis, and always try to guide users toward getting their landing page at https://easypagex.github.io/lpus/`;
+
+  const messagesEl = document.getElementById('messages');
+  const input = document.getElementById('userInput');
+  const sendBtn = document.getElementById('sendBtn');
+  let conversationHistory = [];
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  function ask(question) {
+    input.value = question;
+    sendMessage();
+  }
+
+  function appendMsg(role, html) {
+    const isUser = role === 'user';
+    const div = document.createElement('div');
+    div.className = `msg ${isUser ? 'user' : 'bot'}`;
+    div.innerHTML = `
+      <div class="avatar">${isUser ? '👤' : '🤖'}</div>
+      <div class="bubble">${html}</div>
+    `;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return div;
+  }
+
+  function showTyping() {
+    const div = document.createElement('div');
+    div.className = 'msg bot';
+    div.id = 'typing-indicator';
+    div.innerHTML = `
+      <div class="avatar">🤖</div>
+      <div class="bubble">
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+      </div>
+    `;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function removeTyping() {
+    const el = document.getElementById('typing-indicator');
+    if (el) el.remove();
+  }
+
+  function formatResponse(text) {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/(https?:\/\/[^\s)]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
+      .replace(/\n/g, '<br>');
+  }
+
+  async function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = '';
+    sendBtn.disabled = true;
+    appendMsg('user', text);
+    conversationHistory.push({ role: 'user', content: text });
+
+    showTyping();
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: SYSTEM_PROMPT,
+          messages: conversationHistory
+        })
+      });
+
+      const data = await response.json();
+      removeTyping();
+
+      if (data.content && data.content[0]) {
+        const reply = data.content[0].text;
+        conversationHistory.push({ role: 'assistant', content: reply });
+        appendMsg('bot', formatResponse(reply));
+      } else {
+        appendMsg('bot', '⚠️ Something went wrong. Please try again!');
+      }
+    } catch (err) {
+      removeTyping();
+      appendMsg('bot', '⚠️ Connection error. Please refresh and try again.');
+    }
+
+    sendBtn.disabled = false;
+    input.focus();
+  }
+</script>
+</body>
+</html>
